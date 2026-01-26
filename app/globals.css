@@ -1,26 +1,56 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* =========================
+   design tokens
+   ========================= */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
+  /* background */
+  --color-bg: #ffffff;
+  --color-bg-muted: #f5f7f6;
+  --color-surface: #ffffff;
+
+  /* text */
+  --color-text-main: #0f172a;
+  --color-text-muted: #64748b;
+
+  /* brand */
+  --color-accent: #7c3aed;        /* solana-friendly purple */
+  --color-accent-soft: #ede9fe;
+
+  /* borders */
+  --color-border: #e5e7eb;
+
+  /* state */
+  --color-success: #16a34a;
+  --color-error: #dc2626;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-bg: #0a0a0a;
+    --color-bg-muted: #0f0f0f;
+    --color-surface: #111111;
+
+    --color-text-main: #e5e7eb;
+    --color-text-muted: #9ca3af;
+
+    --color-accent: #8b5cf6;
+    --color-accent-soft: #1e1b4b;
+
+    --color-border: #1f2933;
+
+    --color-success: #22c55e;
+    --color-error: #ef4444;
   }
 }
 
+/* =========================
+   base
+   ========================= */
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text-main);
+  font-family: var(--font-sans);
 }

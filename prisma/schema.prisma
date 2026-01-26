@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model PaymentLink {
+  id                 String   @id
+  createdAt          DateTime @default(now())
+
+  creatorWallet      String
+  creatorPoolAddress String
+
+  amountLamports     BigInt
+
+  ciphertext         String
+  iv                 String
+  tag                String
+
+  label              String?
+  status             String   @default("active")
+
+  payments           Payment[]
+  accessTokens       AccessToken[]
+}
+
+model Payment {
+  id              String   @id
+  createdAt       DateTime @default(now())
+
+  linkId          String
+  link            PaymentLink @relation(fields: [linkId], references: [id])
+
+  payerWallet     String
+  amountLamports  BigInt
+  token           String   @default("SOL")
+
+  txSignature     String   @unique
+  status          String   @default("confirmed")
+
+  accessToken     AccessToken?
+
+  @@index([linkId])
+  @@index([payerWallet])
+}
+
+model AccessToken {
+  id              String   @id
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+  usedAt          DateTime?
+
+  tokenHash       String   @unique
+  fingerprintHash String
+
+  paymentId       String   @unique
+  payment         Payment  @relation(fields: [paymentId], references: [id])
+
+  linkId          String
+  link            PaymentLink @relation(fields: [linkId], references: [id])
+
+  @@index([linkId])
+  @@index([expiresAt])
+}
