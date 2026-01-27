@@ -32,6 +32,7 @@ export default function PayPage({ params }: Props) {
     hasFunds,
     loading: balanceLoading,
     error: balanceError,
+    refresh,
   } = useShadowwireBalance(wallet);
 
   const [data, setData] = useState<PaymentLinkData | null>(null);
@@ -137,7 +138,7 @@ export default function PayPage({ params }: Props) {
               to pay anonymously, you must first deposit SOL into the
               private pool.
             </p>
-            <DepositFlow />
+            <DepositFlow refreshBalance={refresh} />
           </div>
         )}
 

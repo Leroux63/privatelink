@@ -55,7 +55,6 @@ export default function DepositFlow({ refreshBalance }: Props) {
         await connection.sendRawTransaction(signed.serialize());
       }
 
-      // 🔁 refresh contrôlé
       for (let i = 0; i < 4; i++) {
         await sleep(5000);
         await refreshBalance();

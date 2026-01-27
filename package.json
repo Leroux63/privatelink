@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@prisma/adapter-better-sqlite3": "^7.3.0",
+    "@prisma/adapter-libsql": "^7.3.0",
     "@prisma/client": "^7.3.0",
     "@radr/shadowwire": "^1.1.15",
     "@solana/wallet-adapter-react": "^0.15.39",

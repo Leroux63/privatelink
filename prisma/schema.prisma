@@ -64,3 +64,23 @@ model AccessToken {
   @@index([linkId])
   @@index([expiresAt])
 }
+
+model CreatorFeatures {
+  wallet            String   @id
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  twitterEnabled    Boolean  @default(false)
+}
+
+model CreatorTwitter {
+  wallet            String   @id
+  createdAt         DateTime @default(now())
+
+  twitterId         String   @unique
+  twitterUsername   String
+  twitterName       String
+  twitterAvatarUrl  String
+
+  @@index([wallet])
+}

@@ -1,14 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import Header from "@/components/header";
 
-export default function ContentPage({ params }: { params: { linkId: string } }) {
-  const { linkId } = params;
+export default function ContentPage() {
+  const params = useParams<{ linkId: string }>();
+  const linkId = params.linkId;
+
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!linkId) return;
+
     const token = localStorage.getItem(`access_token_${linkId}`);
     if (!token) {
       setError("no access token found");

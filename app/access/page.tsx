@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Header from "@/components/header";
+
 
 type GoogleTextRun = {
   content?: string;
@@ -28,7 +29,8 @@ type GoogleDoc = {
   };
 };
 
-export default function AccessPage() {
+
+function AccessInner() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
@@ -54,11 +56,9 @@ export default function AccessPage() {
         return data;
       })
       .then((data) => {
-        console.log("[ACCESS_PAGE] received doc", data.doc);
         setDoc(data.doc);
       })
       .catch((e) => {
-        console.error("[ACCESS_PAGE] error", e);
         setError(e.message);
       })
       .finally(() => setLoading(false));
@@ -67,14 +67,11 @@ export default function AccessPage() {
   function renderParagraph(p: GoogleParagraph) {
     if (!p.elements) return null;
 
-    return p.elements.map((el, i) => {
-      if (!el.textRun?.content) return null;
-      return (
-        <span key={i}>
-          {el.textRun.content}
-        </span>
-      );
-    });
+    return p.elements.map((el, i) =>
+      el.textRun?.content ? (
+        <span key={i}>{el.textRun.content}</span>
+      ) : null
+    );
   }
 
   return (
@@ -101,19 +98,25 @@ export default function AccessPage() {
             </h1>
 
             <div className="space-y-4 text-[15px] leading-relaxed">
-              {doc.body.content.map((el, i) => {
-                if (!el.paragraph) return null;
-
-                return (
+              {doc.body.content.map((el, i) =>
+                el.paragraph ? (
                   <p key={i}>
                     {renderParagraph(el.paragraph)}
                   </p>
-                );
-              })}
+                ) : null
+              )}
             </div>
           </>
         )}
       </main>
     </div>
+  );
+}
+
+export default function AccessPage() {
+  return (
+    <Suspense fallback={<p className="p-6">loading…</p>}>
+      <AccessInner />
+    </Suspense>
   );
 }
