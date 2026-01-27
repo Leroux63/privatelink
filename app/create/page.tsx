@@ -19,6 +19,7 @@ export default function CreatePage() {
     hasFunds,
     loading: balanceLoading,
     error: balanceError,
+    refresh: refreshBalance,
   } = useShadowwireBalance(wallet);
 
   const [label, setLabel] = useState("");
@@ -118,7 +119,8 @@ export default function CreatePage() {
               you must deposit funds to activate private payments
             </p>
 
-            <DepositFlow />
+            <DepositFlow refreshBalance={refreshBalance} />
+
           </div>
         )}
 
