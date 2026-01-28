@@ -1,145 +1,81 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import { prisma } from "@/lib/db/prisma";
 
-function getCookie(req: Request, name: string) {
-  const raw = req.headers.get("cookie") || "";
-  const part = raw.split("; ").find((c) => c.startsWith(`${name}=`));
-  return part ? decodeURIComponent(part.split("=").slice(1).join("=")) : null;
+function base64url(buf: Buffer) {
+  return buf
+    .toString("base64")
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
 }
 
-export async function GET(req: Request) {
+export async function POST(req: Request) {
   const clientId = process.env.X_CLIENT_ID;
-  const clientSecret = process.env.X_CLIENT_SECRET;
   const redirectUri = process.env.X_REDIRECT_URI;
 
-  console.log("[X CALLBACK] env", {
-    hasClientId: !!clientId,
-    hasClientSecret: !!clientSecret,
-    redirectUri,
+  if (!clientId || !redirectUri) {
+    return NextResponse.json({ error: "Missing X env vars" }, { status: 500 });
+  }
+
+  const body = await req.json().catch(() => null);
+  const wallet = body?.wallet;
+
+  if (!wallet) {
+    return NextResponse.json({ error: "Missing wallet" }, { status: 400 });
+  }
+
+  const features = await prisma.creatorFeatures.findUnique({
+    where: { wallet },
   });
 
-  if (!clientId || !clientSecret || !redirectUri) {
-    return NextResponse.json(
-      { error: "Missing X env vars" },
-      { status: 500 }
-    );
+  if (!features?.twitterEnabled) {
+    return NextResponse.json({ error: "X feature locked" }, { status: 402 });
   }
 
-  const { searchParams } = new URL(req.url);
-  const code = searchParams.get("code");
-  const returnedState = searchParams.get("state");
-  const error = searchParams.get("error");
-
-  console.log("[X CALLBACK] params", { code, returnedState, error });
-
-  if (error) {
-    return NextResponse.json({ error }, { status: 400 });
-  }
-
-  const expectedState = getCookie(req, "x_oauth_state");
-  const codeVerifier = getCookie(req, "x_code_verifier");
-  const wallet = getCookie(req, "x_wallet");
-
-  console.log("[X CALLBACK] cookies", {
-    expectedState,
-    hasCodeVerifier: !!codeVerifier,
-    wallet,
-  });
-
-  if (!code || !returnedState || !expectedState || !codeVerifier || !wallet) {
-    return NextResponse.json(
-      { error: "Missing OAuth data" },
-      { status: 400 }
-    );
-  }
-
-  if (returnedState !== expectedState) {
-    return NextResponse.json(
-      { error: "Invalid state" },
-      { status: 400 }
-    );
-  }
-
-  const basicAuth = Buffer.from(
-    `${clientId}:${clientSecret}`
-  ).toString("base64");
-
-  console.log("[X TOKEN] exchanging code");
-
-  const tokenRes = await fetch("https://api.x.com/2/oauth2/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${basicAuth}`,
-    },
-    body: new URLSearchParams({
-      grant_type: "authorization_code",
-      code,
-      redirect_uri: redirectUri,
-      code_verifier: codeVerifier,
-    }),
-  });
-
-  const tokenJson = await tokenRes.json();
-
-  console.log("[X TOKEN] response", {
-    status: tokenRes.status,
-    body: tokenJson,
-  });
-
-  if (!tokenRes.ok || !tokenJson.access_token) {
-    return NextResponse.json(
-      { error: "Token exchange failed", details: tokenJson },
-      { status: 400 }
-    );
-  }
-
-  console.log("[X ME] fetching user");
-
-  const meRes = await fetch(
-    "https://api.x.com/2/users/me?user.fields=profile_image_url,name,username",
-    {
-      headers: {
-        Authorization: `Bearer ${tokenJson.access_token}`,
-      },
-    }
+  const state = crypto.randomUUID();
+  const codeVerifier = base64url(crypto.randomBytes(32));
+  const codeChallenge = base64url(
+    crypto.createHash("sha256").update(codeVerifier).digest()
   );
 
-  const meJson = await meRes.json();
+  const authorizeUrl =
+    "https://x.com/i/oauth2/authorize?" +
+    new URLSearchParams({
+      response_type: "code",
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope: "users.read tweet.read",
+      state,
+      code_challenge: codeChallenge,
+      code_challenge_method: "S256",
+    }).toString();
 
-  console.log("[X ME] response", {
-    status: meRes.status,
-    body: meJson,
+  const res = NextResponse.json({ redirectUrl: authorizeUrl });
+
+  res.cookies.set("x_oauth_state", state, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 600,
   });
 
-  if (!meRes.ok || !meJson?.data?.id) {
-    return NextResponse.json(
-      { error: "Failed to fetch user", details: meJson },
-      { status: 400 }
-    );
-  }
-
-  await prisma.creatorTwitter.upsert({
-    where: { wallet },
-    update: {
-      twitterId: meJson.data.id,
-      twitterUsername: meJson.data.username,
-      twitterName: meJson.data.name,
-      twitterAvatarUrl: meJson.data.profile_image_url ?? "",
-    },
-    create: {
-      wallet,
-      twitterId: meJson.data.id,
-      twitterUsername: meJson.data.username,
-      twitterName: meJson.data.name,
-      twitterAvatarUrl: meJson.data.profile_image_url ?? "",
-    },
+  res.cookies.set("x_code_verifier", codeVerifier, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 600,
   });
 
-  const res = NextResponse.redirect("/dashboard");
-  res.cookies.set("x_oauth_state", "", { path: "/", maxAge: 0 });
-  res.cookies.set("x_code_verifier", "", { path: "/", maxAge: 0 });
-  res.cookies.set("x_wallet", "", { path: "/", maxAge: 0 });
+  res.cookies.set("x_wallet", wallet, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 600,
+  });
 
   return res;
 }
