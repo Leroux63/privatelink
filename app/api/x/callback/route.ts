@@ -9,11 +9,18 @@ function getCookie(req: Request, name: string) {
 
 export async function GET(req: Request) {
   const clientId = process.env.X_CLIENT_ID;
+  const clientSecret = process.env.X_CLIENT_SECRET;
   const redirectUri = process.env.X_REDIRECT_URI;
 
-  if (!clientId || !redirectUri) {
+  console.log("[X CALLBACK] env", {
+    hasClientId: !!clientId,
+    hasClientSecret: !!clientSecret,
+    redirectUri,
+  });
+
+  if (!clientId || !clientSecret || !redirectUri) {
     return NextResponse.json(
-      { error: "Missing X_CLIENT_ID or X_REDIRECT_URI" },
+      { error: "Missing X_CLIENT_ID or X_CLIENT_SECRET or X_REDIRECT_URI" },
       { status: 500 }
     );
   }
@@ -22,6 +29,8 @@ export async function GET(req: Request) {
   const code = searchParams.get("code");
   const returnedState = searchParams.get("state");
   const error = searchParams.get("error");
+
+  console.log("[X CALLBACK] params", { hasCode: !!code, returnedState, error });
 
   if (error) {
     return NextResponse.json({ error }, { status: 400 });
@@ -34,6 +43,12 @@ export async function GET(req: Request) {
   const codeVerifier = getCookie(req, "x_code_verifier");
   const wallet = getCookie(req, "x_wallet");
 
+  console.log("[X CALLBACK] cookies", {
+    expectedState,
+    hasCodeVerifier: !!codeVerifier,
+    walletPresent: !!wallet,
+  });
+
   if (!expectedState || !codeVerifier || !wallet) {
     return NextResponse.json({ error: "Missing OAuth cookies" }, { status: 400 });
   }
@@ -42,17 +57,20 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Invalid state" }, { status: 400 });
   }
 
-  const features = await prisma.creatorFeatures.findUnique({
-    where: { wallet },
-  });
+  const features = await prisma.creatorFeatures.findUnique({ where: { wallet } });
   if (!features?.twitterEnabled) {
     return NextResponse.json({ error: "X feature locked" }, { status: 402 });
   }
+
+  const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+
+  console.log("[X TOKEN] exchanging code");
 
   const tokenRes = await fetch("https://api.x.com/2/oauth2/token", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${basicAuth}`,
     },
     body: new URLSearchParams({
       grant_type: "authorization_code",
@@ -63,22 +81,36 @@ export async function GET(req: Request) {
     }),
   });
 
-  const tokenJson = await tokenRes.json();
-  if (!tokenRes.ok || !tokenJson.access_token) {
+  const tokenJson = await tokenRes.json().catch(() => null);
+
+  console.log("[X TOKEN] response", {
+    status: tokenRes.status,
+    ok: tokenRes.ok,
+    body: tokenJson,
+  });
+
+  if (!tokenRes.ok || !tokenJson?.access_token) {
     return NextResponse.json(
       { error: "Token exchange failed", details: tokenJson },
       { status: 400 }
     );
   }
 
+  console.log("[X ME] fetching user");
+
   const meRes = await fetch(
     "https://api.x.com/2/users/me?user.fields=profile_image_url,name,username",
-    {
-      headers: { Authorization: `Bearer ${tokenJson.access_token}` },
-    }
+    { headers: { Authorization: `Bearer ${tokenJson.access_token}` } }
   );
 
-  const meJson = await meRes.json();
+  const meJson = await meRes.json().catch(() => null);
+
+  console.log("[X ME] response", {
+    status: meRes.status,
+    ok: meRes.ok,
+    body: meJson,
+  });
+
   if (!meRes.ok || !meJson?.data?.id) {
     return NextResponse.json(
       { error: "Failed to fetch user profile", details: meJson },
@@ -110,10 +142,9 @@ export async function GET(req: Request) {
     },
   });
 
-  const res = NextResponse.redirect("/dashboard");
+  const res = NextResponse.redirect(new URL("/dashboard", req.url));
   res.cookies.set("x_oauth_state", "", { path: "/", maxAge: 0 });
   res.cookies.set("x_code_verifier", "", { path: "/", maxAge: 0 });
   res.cookies.set("x_wallet", "", { path: "/", maxAge: 0 });
-
   return res;
 }
