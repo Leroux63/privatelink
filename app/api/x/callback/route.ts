@@ -30,7 +30,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Missing code/state" }, { status: 400 });
   }
 
-  // 🔐 PKCE cookies
   const expectedState = getCookie(req, "x_oauth_state");
   const codeVerifier = getCookie(req, "x_code_verifier");
   const wallet = getCookie(req, "x_wallet");
@@ -43,7 +42,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Invalid state" }, { status: 400 });
   }
 
-  // (sécurité) re-check feature
   const features = await prisma.creatorFeatures.findUnique({
     where: { wallet },
   });
@@ -51,10 +49,16 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "X feature locked" }, { status: 402 });
   }
 
-  // 🔁 échange code → token
   const tokenRes = await fetch("https://api.x.com/2/oauth2/token", {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Authorization":
+        "Basic " +
+        Buffer.from(
+          `${clientId}:${process.env.X_CLIENT_SECRET}`
+        ).toString("base64"),
+    },
     body: new URLSearchParams({
       grant_type: "authorization_code",
       client_id: clientId,
@@ -64,6 +68,7 @@ export async function GET(req: Request) {
     }),
   });
 
+
   const tokenJson = await tokenRes.json();
   if (!tokenRes.ok || !tokenJson.access_token) {
     return NextResponse.json(
@@ -72,7 +77,6 @@ export async function GET(req: Request) {
     );
   }
 
-  // 👤 profil X
   const meRes = await fetch(
     "https://api.x.com/2/users/me?user.fields=profile_image_url,name,username",
     {
@@ -95,7 +99,6 @@ export async function GET(req: Request) {
     profile_image_url?: string;
   };
 
-  // 💾 save
   await prisma.creatorTwitter.upsert({
     where: { wallet },
     update: {
@@ -113,7 +116,6 @@ export async function GET(req: Request) {
     },
   });
 
-  // 🧹 clean cookies
   const res = NextResponse.redirect("/dashboard");
   res.cookies.set("x_oauth_state", "", { path: "/", maxAge: 0 });
   res.cookies.set("x_code_verifier", "", { path: "/", maxAge: 0 });

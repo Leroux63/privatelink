@@ -52,6 +52,9 @@ export default function DashboardPage() {
 
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [payments, setPayments] = useState<PaidItem[]>([]);
+  const [xEnabled, setXEnabled] = useState(false);
+  const [xConnected, setXConnected] = useState(false);
+  const [xProfile, setXProfile] = useState<any>(null);
 
   /* ===================== DATA LOAD ===================== */
 
@@ -81,6 +84,23 @@ export default function DashboardPage() {
       .catch(() => setPayments([]));
   }, [connected, wallet]);
 
+  useEffect(() => {
+    if (!wallet) return;
+
+    fetch("/api/creator/x/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ wallet }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        setXEnabled(d.enabled);
+        setXConnected(d.connected);
+        setXProfile(d.profile ?? null);
+      });
+  }, [wallet]);
+
+
   /* ===================== GUARDS ===================== */
 
   if (!connected) {
@@ -109,6 +129,48 @@ export default function DashboardPage() {
 
       <div className="mx-auto max-w-2xl p-6 space-y-12">
         <h1 className="text-xl font-semibold">your dashboard</h1>
+        <section className="rounded border p-4 space-y-3">
+          <h2 className="text-lg font-medium">X identity</h2>
+
+          {!xEnabled && (
+            <button
+              onClick={async () => {
+                await fetch("/api/x/unlock", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ wallet }),
+                });
+                setXEnabled(true);
+              }}
+              className="rounded bg-black px-4 py-2 text-white text-sm"
+            >
+              Unlock X identity
+            </button>
+          )}
+
+          {xEnabled && !xConnected && (
+            <button
+              onClick={async () => {
+                const r = await fetch("/api/x/connect", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ wallet }),
+                });
+                const d = await r.json();
+                window.location.href = d.redirectUrl;
+              }}
+              className="rounded border px-4 py-2 text-sm"
+            >
+              Connect X account
+            </button>
+          )}
+
+          {xConnected && xProfile && (
+            <p className="text-sm">
+              Connected as <strong>@{xProfile.twitterUsername}</strong>
+            </p>
+          )}
+        </section>
 
         {/* ===== DEPOSIT ===== */}
         <div className="rounded border bg-[var(--color-surface)] p-4 space-y-3">

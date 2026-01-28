@@ -21,7 +21,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // ✅ WALLET VIENT DU CLIENT
   const body = await req.json().catch(() => null);
   const wallet: string | undefined = body?.wallet;
 
@@ -32,7 +31,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // 🔒 Feature gate (monétisation)
   const features = await prisma.creatorFeatures.findUnique({
     where: { wallet },
   });
@@ -44,7 +42,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // 🔐 PKCE
   const state = crypto.randomUUID();
   const codeVerifier = base64url(crypto.randomBytes(32));
   const codeChallenge = base64url(
@@ -63,7 +60,6 @@ export async function POST(req: Request) {
       code_challenge_method: "S256",
     }).toString();
 
-  // ⛳ On renvoie l’URL + on stocke PKCE côté serveur
   const res = NextResponse.json({ redirectUrl: authorizeUrl });
 
   res.cookies.set("x_oauth_state", state, {
@@ -82,7 +78,6 @@ export async function POST(req: Request) {
     maxAge: 10 * 60,
   });
 
-  // 👉 wallet stocké TEMPORAIREMENT pour le callback uniquement
   res.cookies.set("x_wallet", wallet, {
     httpOnly: true,
     sameSite: "lax",
