@@ -53,11 +53,6 @@ export async function GET(req: Request) {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      "Authorization":
-        "Basic " +
-        Buffer.from(
-          `${clientId}:${process.env.X_CLIENT_SECRET}`
-        ).toString("base64"),
     },
     body: new URLSearchParams({
       grant_type: "authorization_code",
@@ -67,7 +62,6 @@ export async function GET(req: Request) {
       code_verifier: codeVerifier,
     }),
   });
-
 
   const tokenJson = await tokenRes.json();
   if (!tokenRes.ok || !tokenJson.access_token) {
