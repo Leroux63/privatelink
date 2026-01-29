@@ -315,7 +315,7 @@ export default function DashboardPage() {
                             return;
                           }
 
-                          window.location.href = `/access/${d.token}`;
+                          window.location.href = `/access?token=${d.token}`;
                         }}
                       >
                         View content
