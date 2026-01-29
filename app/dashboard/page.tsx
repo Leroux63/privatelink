@@ -7,6 +7,7 @@ import Header from "@/components/header";
 import DepositFlow from "@/components/depositFlow";
 import WithdrawFlow from "@/components/withdrawFlow";
 import { useShadowwireBalance } from "@/hooks/useShadowwireBalance";
+import CreatorBadge from "@/components/creatorBadge";
 
 /* ===================== TYPES ===================== */
 
@@ -38,6 +39,12 @@ type PaidItem = {
   } | null;
 };
 
+type CreatorProfile = {
+  twitterUsername: string;
+  twitterName: string;
+  twitterAvatarUrl: string;
+};
+
 /* ===================== PAGE ===================== */
 
 export default function DashboardPage() {
@@ -54,7 +61,8 @@ export default function DashboardPage() {
   const [payments, setPayments] = useState<PaidItem[]>([]);
   const [xEnabled, setXEnabled] = useState(false);
   const [xConnected, setXConnected] = useState(false);
-  const [xProfile, setXProfile] = useState<any>(null);
+  const [xProfile, setXProfile] = useState<CreatorProfile | null>(null);
+
 
   /* ===================== DATA LOAD ===================== */
 
@@ -129,8 +137,10 @@ export default function DashboardPage() {
 
       <div className="mx-auto max-w-2xl p-6 space-y-12">
         <h1 className="text-xl font-semibold">your dashboard</h1>
-        <section className="rounded border p-4 space-y-3">
-          <h2 className="text-lg font-medium">X identity</h2>
+        <section className="rounded border p-4 space-y-4">
+          <h2 className="text-lg font-medium">Creator identity</h2>
+
+          <CreatorBadge profile={xProfile} />
 
           {!xEnabled && (
             <button
@@ -144,7 +154,7 @@ export default function DashboardPage() {
               }}
               className="rounded bg-black px-4 py-2 text-white text-sm"
             >
-              Unlock X identity
+              Verify identity
             </button>
           )}
 
@@ -164,13 +174,8 @@ export default function DashboardPage() {
               Connect X account
             </button>
           )}
-
-          {xConnected && xProfile && (
-            <p className="text-sm">
-              Connected as <strong>@{xProfile.twitterUsername}</strong>
-            </p>
-          )}
         </section>
+
 
         {/* ===== DEPOSIT ===== */}
         <div className="rounded border bg-[var(--color-surface)] p-4 space-y-3">
@@ -266,25 +271,56 @@ export default function DashboardPage() {
               return (
                 <li
                   key={p.paymentId}
-                  className="rounded border p-4 space-y-1"
+                  className="rounded border p-4 space-y-2"
                 >
                   <div className="font-medium">
                     {p.link?.label ?? "private content"}
                   </div>
+
                   <div className="text-sm opacity-80">
-                    {solAmount.toFixed(9)} SOL
+                    {(Number(p.amountLamports) / 1e9).toFixed(9)} SOL
                   </div>
-                  <div className="text-xs opacity-60 flex justify-between">
-                    <span>status: {p.status}</span>
-                    {p.access && (
-                      <span>
-                        valid until{" "}
-                        {new Date(
-                          p.access.expiresAt
-                        ).toLocaleString()}
-                      </span>
+
+                  <div className="text-xs opacity-60">
+                    status: {p.status}
+                  </div>
+
+                  {p.access && (
+                    <div className="text-xs opacity-60">
+                      valid until{" "}
+                      {new Date(p.access.expiresAt).toLocaleString()}
+                    </div>
+                  )}
+
+                  {/* ===== VIEW CONTENT BUTTON ===== */}
+                  {p.access &&
+                    !p.access.usedAt &&
+                    new Date(p.access.expiresAt) > new Date() && (
+                      <button
+                        className="mt-2 inline-block rounded border px-3 py-1 text-sm hover:bg-gray-50"
+                        onClick={async () => {
+                          const r = await fetch("/api/access/redeem", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              paymentId: p.paymentId,
+                              wallet,
+                            }),
+                          });
+
+                          const d = await r.json();
+
+                          if (!r.ok || !d.token) {
+                            alert(d.error ?? "access failed");
+                            return;
+                          }
+
+                          window.location.href = `/access/${d.token}`;
+                        }}
+                      >
+                        View content
+                      </button>
                     )}
-                  </div>
                 </li>
               );
             })}
