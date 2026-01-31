@@ -71,25 +71,53 @@ export default function DepositFlow({ refreshBalance }: Props) {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm mb-1">deposit amount (SOL)</label>
+        <label className="block text-xs mb-1 text-[var(--color-text-muted)]">
+          Deposit amount (SOL)
+        </label>
+
         <input
           type="number"
           min={MIN_DEPOSIT_SOL}
           step="0.01"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className="w-full rounded border px-3 py-2 text-sm"
+          className="
+      w-full
+      rounded
+      border
+      px-3 py-2
+      text-sm
+      focus:outline-none
+      focus:ring-1
+      focus:ring-black
+    "
         />
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && (
+        <p className="text-sm text-red-500">{error}</p>
+      )}
 
       <button
         onClick={handleDeposit}
         disabled={loading}
-        className="w-full rounded bg-black px-4 py-2 text-white disabled:opacity-50"
+        className="
+    w-full
+    mt-2
+    rounded
+    bg-black
+    px-4 py-2
+    text-sm font-medium
+    text-white
+    cursor-pointer
+    transition
+    hover:opacity-90
+    active:scale-[0.98]
+    disabled:opacity-40
+    disabled:cursor-not-allowed
+  "
       >
-        {loading ? "processing..." : "deposit"}
+        {loading ? "Processing…" : "Deposit"}
       </button>
     </div>
   );

@@ -108,7 +108,9 @@ export default function WithdrawFlow({
 
   return (
     <div className="pt-4 border-t space-y-2">
-      <label className="text-sm">withdraw amount (SOL)</label>
+      <label className="block text-xs text-[var(--color-text-muted)]">
+        Withdraw amount (SOL)
+      </label>
 
       <div className="flex gap-2">
         <input
@@ -119,7 +121,16 @@ export default function WithdrawFlow({
             setAmount(e.target.value.replace(/[^0-9.,]/g, ""))
           }
           placeholder="0.1"
-          className="flex-1 border px-3 py-2 text-sm"
+          className="
+      flex-1
+      rounded
+      border
+      px-3 py-2
+      text-sm
+      focus:outline-none
+      focus:ring-1
+      focus:ring-black
+    "
         />
 
         <button
@@ -127,7 +138,16 @@ export default function WithdrawFlow({
           onClick={() =>
             setAmount((availableLamports / 1e9).toFixed(9))
           }
-          className="text-sm underline"
+          className="
+      rounded
+      border
+      px-3
+      text-sm
+      cursor-pointer
+      transition
+      hover:bg-[var(--color-bg-muted)]
+      active:scale-[0.97]
+    "
         >
           max
         </button>
@@ -136,9 +156,23 @@ export default function WithdrawFlow({
       <button
         disabled={loading}
         onClick={handleWithdraw}
-        className="w-full bg-black text-white py-2 text-sm disabled:opacity-40"
+        className="
+    w-full
+    mt-2
+    rounded
+    bg-black
+    py-2
+    text-sm font-medium
+    text-white
+    cursor-pointer
+    transition
+    hover:opacity-90
+    active:scale-[0.98]
+    disabled:opacity-40
+    disabled:cursor-not-allowed
+  "
       >
-        {loading ? "withdrawing…" : "withdraw"}
+        {loading ? "Withdrawing…" : "Withdraw"}
       </button>
 
       {sig && (

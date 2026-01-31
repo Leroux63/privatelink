@@ -91,9 +91,6 @@ export async function POST(req: Request) {
       );
     }
 
-    /**
-     * 6️⃣ Créer Payment (MAINTENANT SEULEMENT)
-     */
     const payment =
       existingPayment ??
       (await prisma.payment.create({

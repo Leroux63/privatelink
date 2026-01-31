@@ -3,10 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { ArrowRight } from "lucide-react";
 
-import Header from "@/components/header";
 import DepositFlow from "@/components/depositFlow";
+import PoolBadge from "@/components/poolBadge";
 import { useShadowwireBalance } from "@/hooks/useShadowwireBalance";
+
+const MIN_PRICE_SOL = 0.1;
+const DOC_SERVICE_ACCOUNT =
+  "privatelink-doc-access@privatelink-484817.iam.gserviceaccount.com";
 
 export default function CreatePage() {
   const router = useRouter();
@@ -37,8 +42,8 @@ export default function CreatePage() {
     }
 
     const parsedPrice = Number(price.replace(",", "."));
-    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-      setError("invalid price");
+    if (!Number.isFinite(parsedPrice) || parsedPrice < MIN_PRICE_SOL) {
+      setError(`minimum price is ${MIN_PRICE_SOL} SOL`);
       return;
     }
 
@@ -84,22 +89,38 @@ export default function CreatePage() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">
-      <Header />
 
-      <main className="mx-auto max-w-md px-6 py-24">
-        <h1 className="mb-6 text-2xl font-semibold">
-          create payment link
-        </h1>
+      <main className="mx-auto max-w-3xl px-6 py-20">
+        <div className="mb-12 flex items-start justify-between gap-6">
+          <div>
+            <h1 className="text-3xl font-semibold leading-tight">
+              Create a private payment link
+            </h1>
+            <div className="mt-4 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+              <span className="font-medium text-[var(--color-text-main)]">
+                Sell private Google Docs securely
+              </span>
+              <span className="opacity-60">—</span>
+              <span>
+                Access is unlocked only after payment
+              </span>
+            </div>
+          </div>
+
+          {connected && hasPool && balance && (
+            <PoolBadge balanceSol={balanceSol} />
+          )}
+        </div>
 
         {!connected && (
           <p className="text-sm text-[var(--color-text-muted)]">
-            connect your wallet to continue
+            Connect your wallet to continue
           </p>
         )}
 
         {connected && balanceLoading && (
           <p className="text-sm text-[var(--color-text-muted)]">
-            checking private balance…
+            Checking private balance…
           </p>
         )}
 
@@ -110,94 +131,124 @@ export default function CreatePage() {
         )}
 
         {connected && hasPool && !hasFunds && (
-          <div className="rounded border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-            <p className="mb-2 text-sm text-[var(--color-text-muted)]">
-              private pool balance: <strong>0 SOL</strong>
-            </p>
+          <div className="rounded-lg bg-[var(--color-bg-muted)] p-6 space-y-4">
+            <h2 className="text-sm font-medium">
+              Fund your private pool
+            </h2>
 
-            <p className="mb-4 text-sm text-[var(--color-text-muted)]">
-              you must deposit funds to activate private payments
+            <p className="text-sm text-[var(--color-text-muted)]">
+              Private payments require a funded pool.
+              Funds are used to securely route and anonymize buyer payments.
             </p>
 
             <DepositFlow refreshBalance={refreshBalance} />
-
           </div>
         )}
 
         {connected && hasPool && hasFunds && balance && (
-          <>
-            <div className="mb-6 rounded border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-              <p className="text-sm text-[var(--color-text-muted)]">
-                private pool balance
-              </p>
-              <p className="text-lg font-semibold">
-                {balanceSol.toFixed(9)} SOL
-              </p>
-              <p className="mt-1 text-xs opacity-60">
-                pool: {balance.pool_address}
+          <form
+            onSubmit={handleSubmit}
+            className="
+              mt-6
+              rounded-xl
+              bg-[var(--color-surface)]
+              p-8
+              space-y-6
+              shadow-sm
+            "
+          >
+            <div>
+              <label className="mb-2 block text-sm">
+                Label
+              </label>
+              <input
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                required
+                className="w-full rounded border border-[var(--color-border)] bg-transparent px-3 py-2"
+                placeholder="Premium lesson – January"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm">
+                Google Docs link
+              </label>
+
+              <div className="rounded-md bg-[var(--color-bg-muted)] p-3 text-xs">
+                <p className="mb-1 font-medium">
+                  Required access
+                </p>
+                <p className="text-[var(--color-text-muted)]">
+                  This Google Doc must be shared as Viewer with:
+                </p>
+                <p className="mt-1 font-mono text-[11px]">
+                  {DOC_SERVICE_ACCOUNT}
+                </p>
+              </div>
+
+              <input
+                value={docUrl}
+                onChange={(e) => setDocUrl(e.target.value)}
+                required
+                className="mt-3 w-full rounded border border-[var(--color-border)] bg-transparent px-3 py-2"
+                placeholder="https://docs.google.com/..."
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm">
+                Price (SOL)
+              </label>
+              <input
+                value={price}
+                onChange={(e) =>
+                  setPrice(e.target.value.replace(",", "."))
+                }
+                required
+                inputMode="decimal"
+                placeholder="0.1"
+                className="w-full rounded border border-[var(--color-border)] bg-transparent px-3 py-2"
+              />
+              <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                Minimum price enforced by network: 0.1 SOL
               </p>
             </div>
 
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-6 rounded border border-[var(--color-border)] bg-[var(--color-surface)] p-6"
+            {error && (
+              <p className="text-sm text-red-500">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="
+                group
+                flex w-full items-center justify-center gap-2
+                rounded
+                bg-[var(--color-accent)]
+                px-4 py-2
+                font-medium text-white
+                cursor-pointer
+                transition
+                hover:opacity-90
+                hover:shadow-sm
+                active:scale-[0.99]
+              "
             >
-              <div>
-                <label className="mb-2 block text-sm">
-                  label
-                </label>
-                <input
-                  value={label}
-                  onChange={(e) => setLabel(e.target.value)}
-                  required
-                  className="w-full rounded border border-[var(--color-border)] bg-transparent px-3 py-2"
-                  placeholder="e.g. Premium doc – January"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm">
-                  google docs link
-                </label>
-                <input
-                  value={docUrl}
-                  onChange={(e) => setDocUrl(e.target.value)}
-                  required
-                  className="w-full rounded border border-[var(--color-border)] bg-transparent px-3 py-2"
-                  placeholder="https://docs.google.com/..."
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm">
-                  price (SOL)
-                </label>
-                <input
-                  value={price}
-                  onChange={(e) =>
-                    setPrice(e.target.value.replace(",", "."))
-                  }
-                  required
-                  inputMode="decimal"
-                  placeholder="0.01"
-                  className="w-full rounded border border-[var(--color-border)] bg-transparent px-3 py-2"
-                />
-              </div>
-
-              {error && (
-                <p className="text-sm text-red-500">
-                  {error}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                className="w-full rounded bg-[var(--color-accent)] py-2 font-medium text-white"
-              >
-                generate link
-              </button>
-            </form>
-          </>
+              <span>Generate link</span>
+              <ArrowRight
+                size={16}
+                className="
+                  opacity-0
+                  transition
+                  group-hover:opacity-100
+                  group-hover:translate-x-0.5
+                "
+              />
+            </button>
+          </form>
         )}
       </main>
     </div>
