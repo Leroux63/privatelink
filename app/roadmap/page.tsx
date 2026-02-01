@@ -85,11 +85,15 @@ function Card({
 export default function RoadmapPage() {
   return (
     <main className="mx-auto max-w-4xl px-6 py-16">
-      {/* Intro text (PAS un header) */}
+      {/* Intro clarification */}
       <p className="mb-20 max-w-2xl text-[var(--color-text-muted)]">
         PrivateLink is live on Solana mainnet.
-        This roadmap describes how we progressively expand privacy
-        primitives — from private payments to private content and access.
+        <br />
+        <br />
+        PrivateLink is a product layer built on ShadowWire that turns
+        private payments into private access.
+        It protects both creators and users without ever hosting,
+        copying or seeing the content.
       </p>
 
       <Section
@@ -98,74 +102,80 @@ export default function RoadmapPage() {
       >
         <Card
           icon={Lock}
-          title="Private SOL transfers"
-          description="Private payments using Bulletproof zero-knowledge proofs with on-chain verifiability."
+          title="Private SOL payments"
+          description="Private payments using Bulletproof zero-knowledge proofs via ShadowWire, with on-chain verifiability."
           status="live"
         />
         <Card
           icon={CheckCircle2}
-          title="Non-custodial wallet authentication"
-          description="All actions require explicit wallet signatures. No custody."
+          title="Non-custodial authentication"
+          description="All actions require explicit wallet signatures. PrivateLink never holds keys or funds."
           status="live"
         />
         <Card
           icon={Layers}
-          title="ShadowWire protocol integration"
-          description="Built on Radr Labs’ ShadowWire SDK with client-side proof generation."
+          title="ShadowWire integration"
+          description="Built on Radr Labs’ ShadowWire SDK for confidential balances and private payment pools."
+          status="live"
+        />
+        <Card
+          icon={FileText}
+          title="Paid private access to Google Docs"
+          description="Live today. Paid, private access to Google Docs documents without hosting, copying or indexing content."
           status="live"
         />
       </Section>
 
       <Section
-        title="Next — Privacy as a Primitive"
-        subtitle="Exposing existing protocol capabilities"
-      >
-        <Card
-          icon={Sparkles}
-          title="Multi-token private payments"
-          description="USDC, RADR, BONK and other SPL tokens already supported by the protocol."
-          status="building"
-        />
-        <Card
-          icon={Layers}
-          title="Token-aware UX"
-          description="Fee breakdowns, minimums and privacy mode selection in UI."
-          status="building"
-        />
-      </Section>
-
-      <Section
-        title="Evolution — Private Content"
-        subtitle="Beyond payments"
+        title="Next — Extending Access"
+        subtitle="Expanding supported content providers"
       >
         <Card
           icon={FileText}
-          title="Private documents"
-          description="Notion-like private documents gated by wallet or private links."
-          status="planned"
+          title="Additional document providers"
+          description="Extend paid private access to other document platforms (e.g. Notion)."
+          status="building"
         />
         <Card
+          icon={Sparkles}
+          title="Multi-token private payments"
+          description="Support for SPL tokens such as USDC, RADR, BONK and others already supported by ShadowWire."
+          status="building"
+        />
+        <Card
+          icon={Layers}
+          title="Payment-aware UX"
+          description="Clear fee breakdowns, minimum amounts and privacy modes surfaced directly in the interface."
+          status="building"
+        />
+      </Section>
+
+      <Section
+        title="Evolution — Paid Private Access"
+        subtitle="Beyond documents"
+      >
+        <Card
           icon={ImageIcon}
-          title="Private media collections"
-          description="Encrypted photo & media collections with revocable access."
+          title="Paid private access to media collections"
+          description="Access-controlled photo and media collections with revocable, time-limited permissions."
           status="planned"
         />
         <Card
           icon={Radio}
-          title="Private streaming"
-          description="Wallet-authenticated private live streams with anonymous viewers."
+          title="Paid private live access"
+          description="Wallet-authenticated private live streams with anonymous viewers and unlinkable payments."
           status="planned"
         />
       </Section>
 
       <Section
         title="Long-term vision"
-        subtitle="Composable privacy layer"
+        subtitle="Composable privacy for creators and users"
       >
         <Card
           icon={Layers}
-          title="PrivateLink as a privacy layer"
-          description="Unified interface for private payments, content and access control on Solana."
+          title="PrivateLink as an access layer"
+          description="A unified product layer that turns private payments into private access across content types."
           status="planned"
         />
       </Section>

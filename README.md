@@ -1,7 +1,7 @@
 # PrivateLink — Privacy Hack 2026
 
 **Track:** Private Payments  
-**Sponsors:** Radr Labs (ShadowWire), Solana, Helius 
+**Sponsors:** Radr Labs (ShadowWire), Solana, Helius  
 **Category:** Privacy-preserving creator monetization
 
 ---
@@ -10,8 +10,8 @@
 
 Today, creators who sell private content have only two bad options:
 
-1. Host the content themselves → leaks, scraping, surveillance
-2. Use centralized platforms → censorship, loss of ownership
+1. Host the content themselves → leaks, scraping, surveillance  
+2. Use centralized platforms → censorship, loss of ownership  
 
 Payments may be on-chain, but **access is never private**.
 
@@ -28,6 +28,9 @@ Payments may be on-chain, but **access is never private**.
 PrivateLink does **not** know what the content is.  
 It only knows **whether access is allowed**.
 
+> **Today, PrivateLink supports paid private access to Google Docs documents.**  
+> The system is designed to be extensible to other content providers.
+
 ---
 
 ## Privacy model (core of the project)
@@ -35,7 +38,7 @@ It only knows **whether access is allowed**.
 ### What is private?
 
 | Layer | Privacy property |
-|-----|------------------|
+|------|------------------|
 | Payment | Amounts are hidden using ShadowWire |
 | Access | Token-based, encrypted, time-limited |
 | Content | Never stored, never proxied |
@@ -47,6 +50,8 @@ It only knows **whether access is allowed**.
 - User browsing behavior
 - Wallet-to-content mapping after expiration
 
+This protects **both creators and users** by design.
+
 ---
 
 ## Tech stack
@@ -56,9 +61,10 @@ It only knows **whether access is allowed**.
 - **Helius RPC** — reliable, privacy-respecting on-chain reads
 - Next.js 16 / React 19
 - Prisma + libSQL (Turso)
-- Google Docs API (read-only verification)
+- **Google Docs API** — live today (read-only access verification)
 - X OAuth (optional identity)
 
+---
 
 ## How to run locally
 
