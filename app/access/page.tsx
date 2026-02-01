@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Header from "@/components/header";
 
 
 type GoogleTextRun = {
@@ -76,7 +75,6 @@ function AccessInner() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">
-      <Header />
 
       <main className="mx-auto max-w-3xl px-6 py-10 space-y-6">
         {loading && (

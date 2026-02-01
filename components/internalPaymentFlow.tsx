@@ -8,18 +8,19 @@ type Props = {
   linkId: string;
   amountLamports: number;
   recipientWallet?: string;
+  onSuccess?: () => void;
 };
 
 export default function InternalPaymentFlow({
   linkId,
   amountLamports,
   recipientWallet,
+  onSuccess,
 }: Props) {
   const { publicKey, connected, signMessage } = useWallet();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   async function handlePay() {
     if (!connected || !publicKey || !signMessage) {
@@ -79,21 +80,13 @@ export default function InternalPaymentFlow({
         throw new Error(t || "payment confirmation failed");
       }
 
-      setSuccess(true);
+      onSuccess?.();
     } catch (e: any) {
       console.error("internal payment error:", e);
       setError(e?.message ?? "payment failed");
     } finally {
       setLoading(false);
     }
-  }
-
-  if (success) {
-    return (
-      <p className="text-sm text-green-600">
-        payment confirmed
-      </p>
-    );
   }
 
   return (
@@ -107,7 +100,23 @@ export default function InternalPaymentFlow({
       <button
         onClick={handlePay}
         disabled={loading}
-        className="w-full rounded bg-[var(--color-accent)] px-4 py-3 font-medium text-white disabled:opacity-50"
+        className="
+          w-full
+          rounded-md
+          bg-[var(--color-accent)]
+          px-4
+          py-3
+          text-sm
+          font-medium
+          text-white
+          cursor-pointer
+          transition
+          hover:opacity-90
+          hover:shadow-sm
+          active:scale-[0.99]
+          disabled:cursor-not-allowed
+          disabled:opacity-50
+        "
       >
         {loading ? "processing…" : "pay now"}
       </button>

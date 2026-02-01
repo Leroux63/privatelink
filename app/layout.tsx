@@ -46,7 +46,13 @@ export default function RootLayout({
             {children}
           </main>
           <Footer />
-          <Toaster position="bottom-right" />
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              className:
+                "rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-main)] shadow-sm",
+            }}
+          />
         </Providers>
       </body>
     </html>

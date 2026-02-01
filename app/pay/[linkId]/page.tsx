@@ -5,6 +5,8 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import DepositFlow from "@/components/depositFlow";
 import InternalPaymentFlow from "@/components/internalPaymentFlow";
 import { useShadowwireBalance } from "@/hooks/useShadowwireBalance";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type Props = {
   params: Promise<{ linkId: string }>;
@@ -23,6 +25,7 @@ export default function PayPage({ params }: Props) {
 
   const { publicKey, connected } = useWallet();
   const wallet = publicKey?.toBase58();
+  const router = useRouter();
 
   const {
     balance,
@@ -148,6 +151,15 @@ export default function PayPage({ params }: Props) {
               linkId={data.id}
               amountLamports={Number(data.amountLamports)}
               recipientWallet={data.creatorWallet}
+              onSuccess={() => {
+                toast.success("Payment confirmed", {
+                  description: "Redirecting to your dashboard…",
+                });
+
+                setTimeout(() => {
+                  router.push("/dashboard");
+                }, 1200);
+              }}
             />
           </div>
         )}
