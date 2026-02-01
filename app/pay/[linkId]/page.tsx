@@ -2,8 +2,6 @@
 
 import { use, useEffect, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-
-import Header from "@/components/header";
 import DepositFlow from "@/components/depositFlow";
 import InternalPaymentFlow from "@/components/internalPaymentFlow";
 import { useShadowwireBalance } from "@/hooks/useShadowwireBalance";
@@ -63,7 +61,6 @@ export default function PayPage({ params }: Props) {
   if (loadingLink) {
     return (
       <>
-        <Header />
         <p className="p-6">loading…</p>
       </>
     );
@@ -72,7 +69,6 @@ export default function PayPage({ params }: Props) {
   if (errorLink || !data) {
     return (
       <>
-        <Header />
         <p className="p-6 text-sm text-red-500">
           {errorLink ?? "invalid link"}
         </p>
@@ -83,7 +79,6 @@ export default function PayPage({ params }: Props) {
   if (!data.creatorWallet) {
     return (
       <>
-        <Header />
         <p className="p-6 text-sm text-red-500">
           invalid payment link (missing recipient)
         </p>
@@ -97,8 +92,6 @@ export default function PayPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">
-      <Header />
-
       <main className="mx-auto max-w-md px-6 py-24 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold">{label}</h1>

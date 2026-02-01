@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import Header from "@/components/header";
 
 export default function ContentPage() {
   const params = useParams<{ linkId: string }>();
@@ -37,8 +36,6 @@ export default function ContentPage() {
 
   return (
     <>
-      <Header />
-
       <main className="mx-auto max-w-2xl p-6">
         {error && <p className="text-red-500">{error}</p>}
         {!error && !content && <p>loading…</p>}
